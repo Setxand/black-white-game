@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.blackonwhite</groupId>
-    <artifactId>demo</artifactId>
+    <artifactId>blackonwhite</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Black on white game</name>
     <description>Table game</description>
@@ -20,6 +20,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+        <dependency>
             <groupId>com.telegramclient</groupId>
             <artifactId>telclient</artifactId>
             <version>1.0-SNAPSHOT</version>
@@ -27,6 +32,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
         <dependency>
