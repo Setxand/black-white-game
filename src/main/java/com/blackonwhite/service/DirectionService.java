@@ -8,16 +8,22 @@ import telegram.Update;
 public class DirectionService {
 
 	private final MessageProcessor messageProcessor;
+	private final CallbackQueryProcessor callbackQueryProcessor;
 
-	public DirectionService(MessageProcessor messageProcessor) {
+	public DirectionService(MessageProcessor messageProcessor, CallbackQueryProcessor callbackQueryProcessor) {
 		this.messageProcessor = messageProcessor;
+		this.callbackQueryProcessor = callbackQueryProcessor;
 	}
 
 	public void directUpdateForCommon(Update update) {
 
-		update.getMessage().setPlatform(Platform.COMMON);
 
-		if (update.getMessage() != null) {
+
+		if (update.getCallBackQuery() != null) {
+			update.getCallBackQuery().getMessage().setPlatform(Platform.COMMON);
+			callbackQueryProcessor.parseCallBackQuery(update.getCallBackQuery());
+		} else if (update.getMessage() != null) {
+			update.getMessage().setPlatform(Platform.COMMON);
 			messageProcessor.parseMessage(update.getMessage());
 		}
 	}

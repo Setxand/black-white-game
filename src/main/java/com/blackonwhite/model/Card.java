@@ -6,6 +6,8 @@ import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.LinkedList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -26,4 +28,7 @@ public class Card {
 
 	@Enumerated(EnumType.STRING)
 	private CardType cardType;
+
+	@ElementCollection
+	private List<Integer> rooms = new LinkedList<>();
 }

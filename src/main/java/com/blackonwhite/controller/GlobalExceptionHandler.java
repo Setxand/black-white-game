@@ -25,4 +25,15 @@ public class GlobalExceptionHandler {
 		message.setPlatform(Platform.COMMON);
 		telegramClient.simpleMessage(ex.getMessage(), message);
 	}
+
+	@ExceptionHandler(IllegalArgumentException.class)
+	public void handleIllegalArgument(IllegalArgumentException ex) {
+		logger.warn("Error", ex);
+	}
+
+
+	@ExceptionHandler(Exception.class)
+	public void handleIllegalArgument(Exception ex) {
+		logger.warn("Error", ex);
+	}
 }

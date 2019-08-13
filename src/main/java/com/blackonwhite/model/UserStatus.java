@@ -3,5 +3,6 @@ package com.blackonwhite.model;
 public enum UserStatus {
 
 	CREATE_WHITE,
-	CREATE_BLACK
+	CREATE_BLACK,
+	ROOM_CONNECTION
 }

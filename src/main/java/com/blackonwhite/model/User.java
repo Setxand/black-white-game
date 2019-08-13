@@ -26,13 +26,14 @@ public class User {
 	private Integer chatId;
 	private String name;
 	private UserStatus status;
+	private int vinRate;
 
-	@OneToOne
+	@OneToOne(cascade = CascadeType.REFRESH)
 	private Card blackCard;
 
 	@Enumerated(EnumType.STRING)
 	private Role role;
 
-	@OneToMany
+	@OneToMany(cascade = CascadeType.REFRESH)
 	private List<Card> cards = new ArrayList<>();
 }
