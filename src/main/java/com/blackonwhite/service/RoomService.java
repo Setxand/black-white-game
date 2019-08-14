@@ -5,6 +5,7 @@ import com.blackonwhite.model.Card;
 import com.blackonwhite.model.Room;
 import com.blackonwhite.model.User;
 import com.blackonwhite.repository.RoomRepository;
+import com.blackonwhite.util.TextUtils;
 import org.springframework.stereotype.Service;
 import telegram.Message;
 
@@ -44,15 +45,23 @@ public class RoomService {
 
 	public void deleteRoom(Message message) {
 		Room room = getRoom(message.getChat().getId());
-
-		room.getUserQueue().forEach(u -> {
-			u.setCards(new LinkedList<>());
-			if (u.getBlackCard() != null) u.setBlackCard(null);
-			u.setVinRate(0);
-		});
+		room.getUserQueue().forEach(this::deleteRoomForUser);
 
 		cardService.deleteRoom(message.getChat().getId());
 		roomRepo.deleteById(message.getChat().getId());
+	}
+
+	public List<User> deleteRoomForUser(User user) {
+
+		Room room = getRoom(user.getRoomId());
+
+		room.getUserQueue().remove(user);
+
+		user.setCards(new LinkedList<>());
+		if (user.getBlackCard() != null) user.setBlackCard(null);
+		user.setVinRate(0);
+		user.setRoomId(null);
+		return room.getUserQueue();
 	}
 
 	@Transactional
@@ -60,7 +69,7 @@ public class RoomService {
 		Room room = getRoom(roomId);
 
 		if (room.getUserQueue().contains(player)) {
-			throw new BotException("User already exists in the room", roomId);
+			throw new BotException("User already exists in the room", roomId);///todo exc in dictionary
 		}
 
 		room.getUserQueue().add(0, player);
@@ -69,9 +78,15 @@ public class RoomService {
 	}
 
 	@Transactional
-	public User getNextBlackCardUser(Integer roomId) {
+	public User getNextBlackCardUser(Message message) {
+		Integer roomId = message.getChat().getId();
+
 		Room room = getRoom(roomId);
 		List<User> userQueue = room.getUserQueue();
+
+		if (userQueue.size() < 1) ///todo in real case min is 3!
+			throw new BotException(TextUtils.getResourseMessage(message, "PLAYERS_COUNT_ERROR"), roomId);
+
 		User prevUser = userQueue.get(0);
 
 		if (prevUser.getBlackCard() != null) {
@@ -87,8 +102,11 @@ public class RoomService {
 	}
 
 	@Transactional
-	public List<User> startTheGame(Integer roomId) {
-		Room room = getRoom(roomId);
+	public List<User> startTheGame(Message message) {
+		Integer roomId = message.getChat().getId();
+		Room room = roomRepo.findById(roomId)
+				.orElseThrow(() -> new BotException(TextUtils.getResourseMessage(message, "CREATE_ROOM_FIRST"), roomId));
+
 		List<User> userQueue = room.getUserQueue();
 
 		userQueue.forEach(u -> {

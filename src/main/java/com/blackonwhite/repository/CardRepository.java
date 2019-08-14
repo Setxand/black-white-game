@@ -12,7 +12,7 @@ public interface CardRepository extends JpaRepository<Card, String> {
 
 
 	@Query(nativeQuery = true, value = "SELECT * FROM card WHERE card.card_type = ?1 " +
-			"AND ((SELECT COUNT(*) from card_rooms WHERE rooms != ?2 LIMIT 1) > 0 OR SELECT COUNT(*) from card_rooms IS NULL) ORDER BY RAND() LIMIT 1")
+			"AND ((SELECT COUNT(*) from card_rooms WHERE rooms != ?2 LIMIT 1) > 0) ORDER BY RAND() LIMIT 1")
 	Optional<Card> randCard(String type, String roomId);
 
 	@Modifying

@@ -4,6 +4,7 @@ import com.blackonwhite.client.TelegramClient;
 import com.blackonwhite.exceprion.BotException;
 import com.blackonwhite.model.Card;
 import com.blackonwhite.model.User;
+import com.blackonwhite.util.TextUtils;
 import org.springframework.stereotype.Service;
 import telegram.Message;
 
@@ -18,30 +19,27 @@ import static com.blackonwhite.util.TextUtils.getResourseMessage;
 public class MessageProcessor {
 
 	private final CommandService commandService;
-	private final UserService userService;
 	private final CardService cardService;
 	private final TelegramClient telegramClient;
 
-	public MessageProcessor(CommandService commandService, UserService userService,
-							CardService cardService, TelegramClient telegramClient) {
+	public MessageProcessor(CommandService commandService, CardService cardService, TelegramClient telegramClient) {
 		this.commandService = commandService;
-		this.userService = userService;
 		this.cardService = cardService;
 		this.telegramClient = telegramClient;
 	}
 
 	@Transactional
-	public void parseMessage(Message message) {
+	public void parseMessage(Message message, User user) {
 
 		if (message.getText().startsWith("/")) {
-			commandService.command(message);
+			commandService.command(message, user);
 			return;
 		}
 
-		User user = userService.getUser(message.getChat().getId());
 		if (user.getStatus() != null) {
 			processMessageByStatus(user, message);
-		}
+		} else throw new BotException(
+				TextUtils.getResourseMessage(message, "UNKNOWN_COMMAND"), message.getChat().getId());
 	}
 
 
@@ -49,11 +47,11 @@ public class MessageProcessor {
 
 		switch (user.getStatus()) {
 			case CREATE_WHITE:
-				createCard(message, Card.CardType.WHITE);
+				createCard(message, Card.CardType.WHITE, user);
 				break;
 
 			case CREATE_BLACK:
-				createCard(message, Card.CardType.BLACK);
+				createCard(message, Card.CardType.BLACK, user);
 				break;
 
 			case ROOM_CONNECTION:
@@ -64,7 +62,7 @@ public class MessageProcessor {
 					throw new BotException("Invalid Room ID", message.getChat().getId());
 				}
 
-				telegramClient.simpleQuestion("CONNECTION_QUESTION&" + message.getChat().getId(),
+				telegramClient.simpleQuestion("CONNECTION_QUESTION&" + user.getChatId(),
 						String.format(getResourseMessage(message, "CONNECTION_QUESTION"),
 								message.getFrom().getFirstName() + " " + message.getFrom().getLastName()), message);
 
@@ -77,12 +75,12 @@ public class MessageProcessor {
 
 	}
 
-	private void createCard(Message message, Card.CardType type) {
+	private void createCard(Message message, Card.CardType type, User user) {
 		cardService.createCard(type, message.getText());
 		telegramClient.simpleMessage(
 				ResourceBundle.getBundle("dictionary", new Locale(message.getFrom().getLanguageCode()))
 				.getString("DONE"), message);
-		userService.changeUserStatus(message, null);
+		user.setStatus(null);
 	}
 
 }

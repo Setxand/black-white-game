@@ -9,6 +9,7 @@ import telegram.CallBackQuery;
 import telegram.Chat;
 import telegram.Message;
 
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,7 +27,8 @@ public class CallbackQueryProcessor {
 		this.userService = userService;
 	}
 
-	public void parseCallBackQuery(CallBackQuery callBackQuery) {
+	@Transactional
+	public void parseCallBackQuery(CallBackQuery callBackQuery, User user) {
 
 		switch (PayloadUtils.getCommonPayload(callBackQuery.getData())) {
 			case "QUESTION":
@@ -56,8 +58,9 @@ public class CallbackQueryProcessor {
 					users.forEach(u -> {
 						message.getChat().setId(u.getChatId());
 						telegramClient
-								.simpleMessage("User " + player.getName() + " has connected to the game.", message);
+								.simpleMessage("User " + player.getName() + " has connected to the game.", message);///todo dictionary
 					});
+					player.setRoomId(message.getChat().getId());
 
 				} else {
 					callBackQuery.getMessage().getChat().setId(Integer.parseInt(params[1]));

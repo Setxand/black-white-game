@@ -25,6 +25,7 @@ public class User {
 	@Id
 	private Integer chatId;
 	private String name;
+	private Integer roomId;
 	private UserStatus status;
 	private int vinRate;
 
