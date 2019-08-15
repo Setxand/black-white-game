@@ -2,7 +2,9 @@ package com.blackonwhite.service;
 
 import com.blackonwhite.client.Platform;
 import com.blackonwhite.client.TelegramClient;
+import com.blackonwhite.model.Room;
 import com.blackonwhite.model.User;
+import com.blackonwhite.payload.CallBackPayload;
 import com.blackonwhite.util.PayloadUtils;
 import org.springframework.stereotype.Component;
 import telegram.CallBackQuery;
@@ -10,9 +12,8 @@ import telegram.Chat;
 import telegram.Message;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class CallbackQueryProcessor {
@@ -20,19 +21,47 @@ public class CallbackQueryProcessor {
 	private final TelegramClient telegramClient;
 	private final RoomService roomService;
 	private final UserService userService;
+	private final CardService cardService;
 
-	public CallbackQueryProcessor(TelegramClient telegramClient, RoomService roomService, UserService userService) {
+	public CallbackQueryProcessor(TelegramClient telegramClient, RoomService roomService,
+								  UserService userService, CardService cardService) {
 		this.telegramClient = telegramClient;
 		this.roomService = roomService;
 		this.userService = userService;
+		this.cardService = cardService;
 	}
 
 	@Transactional
 	public void parseCallBackQuery(CallBackQuery callBackQuery, User user) {
 
-		switch (PayloadUtils.getCommonPayload(callBackQuery.getData())) {
-			case "QUESTION":
+		switch (CallBackPayload.valueOf(PayloadUtils.getCommonPayload(callBackQuery.getData()))) {
+
+			case QUESTION:
 				simpleQuestion(callBackQuery);
+				break;
+
+			case START_GAME:
+				List<User> userQueue = roomService.getRoom(user.getRoomId()).getUserQueue();
+				user.setMetaInf(callBackQuery.getMessage().getMessageId().toString());
+				telegramClient.simpleMessage("Game was started", callBackQuery.getMessage());////todo
+
+				telegramClient.gameInterfaceForWhite(userQueue, callBackQuery.getMessage(), user.getBlackCard());
+				break;
+
+			case WHITE_CARD_CHOICE:
+
+				String[] params = PayloadUtils.getParams(callBackQuery.getData());
+				String roomId = params[0];
+				String cardId = params[1];
+				Room room = roomService.getRoom(Integer.valueOf(roomId));
+
+				User blackCardUser = userService.getUser(room.getBlackCardPlayerId());
+
+				room.getPickedCards().put(user.getChatId().toString(), cardId);
+
+				telegramClient.gameInterfaceBorBlackCard(blackCardUser,
+						room.getPickedCards().entrySet().stream()
+								.collect(Collectors.toMap(c -> c.getKey(), c -> cardService.getCard(c.getValue()))));
 				break;
 
 			default:

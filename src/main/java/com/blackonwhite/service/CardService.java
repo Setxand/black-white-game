@@ -41,4 +41,8 @@ public class CardService {
 	public void deleteRoom(Integer roomId) {
 		cardRepo.deleteRoom(roomId.toString());
 	}
+
+	public Card getCard(String cardId) {
+		return cardRepo.findById(cardId).orElseThrow(() -> new IllegalArgumentException("Invalid Card ID"));
+	}
 }

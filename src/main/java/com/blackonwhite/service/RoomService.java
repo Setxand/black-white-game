@@ -96,13 +96,14 @@ public class RoomService {
 		}
 
 		User newUser = userQueue.get(0);
+		room.setBlackCardPlayerId(newUser.getChatId());
 		newUser.setBlackCard(cardService.getRandomCard(roomId, Card.CardType.BLACK));
 
 		return userQueue.get(0);
 	}
 
 	@Transactional
-	public List<User> startTheGame(Message message) {
+	public Room startTheGame(Message message) {
 		Integer roomId = message.getChat().getId();
 		Room room = roomRepo.findById(roomId)
 				.orElseThrow(() -> new BotException(TextUtils.getResourseMessage(message, "CREATE_ROOM_FIRST"), roomId));
@@ -117,10 +118,10 @@ public class RoomService {
 
 		});
 
-		return userQueue;
+		return room;
 	}
 
-	private Room getRoom(Integer roomId) {
+	public Room getRoom(Integer roomId) {
 		return roomRepo.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Invalid room ID"));
 	}
 }

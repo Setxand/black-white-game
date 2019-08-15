@@ -2,6 +2,8 @@ package com.blackonwhite.service;
 
 import com.blackonwhite.client.TelegramClient;
 import com.blackonwhite.exceprion.BotException;
+import com.blackonwhite.model.Card;
+import com.blackonwhite.model.Room;
 import com.blackonwhite.model.User;
 import com.blackonwhite.model.UserStatus;
 import com.blackonwhite.util.TextUtils;
@@ -11,7 +13,9 @@ import telegram.Message;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 import static com.blackonwhite.util.TextUtils.getResourseMessage;
 
@@ -20,10 +24,12 @@ public class CommandService {
 
 	private final TelegramClient telegramClient;
 	private final RoomService roomService;
+	private final CardService cardService;
 
-	public CommandService(TelegramClient telegramClient, RoomService roomService) {
+	public CommandService(TelegramClient telegramClient, RoomService roomService, CardService cardService) {
 		this.telegramClient = telegramClient;
 		this.roomService = roomService;
+		this.cardService = cardService;
 	}
 
 	@Transactional
@@ -31,13 +37,6 @@ public class CommandService {
 		String command = message.getText();
 		user.setStatus(null);
 
-		if (command.equals("/exittheroom")) {
-			exitTheRoom(message, user);
-			return;
-		}
-
-		if (user.getRoomId() != null)
-			throw new BotException(TextUtils.getResourseMessage(message, "EXIT_ROOM_FIRST"), message.getChat().getId());
 
 		switch (command) {
 
@@ -73,9 +72,17 @@ public class CommandService {
 				break;
 
 			case "/startthegame":
-				List<User> users = roomService.startTheGame(message);
+				roomService.startTheGame(message);
 				User nextBlackCardUser = roomService.getNextBlackCardUser(message);
-				telegramClient.gameInterface(users, nextBlackCardUser.getBlackCard(), message);
+
+//				Map<String, Card> pickedCards = room.getPickedCards().entrySet().stream()
+//						.collect(Collectors.toMap(c -> c.getKey(), c -> cardService.getCard(c.getValue())));
+
+				telegramClient.gameInterface(nextBlackCardUser, message);
+				break;
+
+			case "/exittheroom":
+				exitTheRoom(message, user);
 				break;
 
 			default:

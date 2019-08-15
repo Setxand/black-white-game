@@ -28,6 +28,7 @@ public class User {
 	private Integer roomId;
 	private UserStatus status;
 	private int vinRate;
+	private String metaInf;
 
 	@OneToOne(cascade = CascadeType.REFRESH)
 	private Card blackCard;
