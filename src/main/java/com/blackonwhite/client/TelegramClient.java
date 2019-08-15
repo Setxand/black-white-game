@@ -58,7 +58,7 @@ public class TelegramClient extends telegram.client.TelegramClient {
 		editInlineButtons(
 				createButtonListMarkup(false, pickedCards.values().stream()
 						.map(card -> new InlineKeyboardButton(card.getName(),
-								setPayloadParams(blackCardUser.getRoomId().toString(), card.getId(),
+								setPayloadParams(card.getId(),
 										CallBackPayload.BLACK_CARD_CHOICE))).
 								toArray(InlineKeyboardButton[]::new)), message);
 	}
@@ -66,21 +66,21 @@ public class TelegramClient extends telegram.client.TelegramClient {
 	public void gameInterfaceForWhite(List<User> users, Message message, Card blackCard) {
 		users.forEach(u -> {
 
-//			if (u.getBlackCard() == null) {
+//			if (u.getBlackCard() == null) {todo
 
 				message.getChat().setId(u.getChatId());
 
 				sendButtons(createButtonListMarkup(false,
 						u.getCards().stream().map(c -> new InlineKeyboardButton(c.getName(),
-								setPayloadParams(message.getChat().getId().toString(), c.getId(), WHITE_CARD_CHOICE)))
+								setPayloadParams(c.getId(), WHITE_CARD_CHOICE)))
 								.toArray(InlineKeyboardButton[]::new)), blackCard.getName(), message);
 //			}
 		});
 	}
 
-	private String setPayloadParams(String roomId, String cardId, CallBackPayload payload) {
+	private String setPayloadParams(String cardId, CallBackPayload payload) {
 		return PayloadUtils
-				.createPayloadWithParams(payload.name(), roomId, cardId);///chatId - in this case it's room id
+				.createPayloadWithParams(payload.name(), cardId);///chatId - in this case it's room id
 	}
 }
 
