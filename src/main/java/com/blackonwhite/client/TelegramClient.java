@@ -40,12 +40,12 @@ public class TelegramClient extends telegram.client.TelegramClient {
 		this.sendButtons(buttonListMarkup, text, message);
 	}
 
-	public void gameInterface(User user, Message message) {
+	public void gameInterface(User user, Message message, Card blackCard) {
 		message.getChat().setId(user.getChatId());
 		sendButtons(createButtonListMarkup(false,
 				new InlineKeyboardButton(TextUtils.getResourseMessage(message, "START_GAME"),
 						PayloadUtils.createPayloadWithParams(START_GAME.name(), user.getChatId().toString()))),
-				user.getBlackCard().getName(), message);
+				blackCard.getName(), message);
 
 	}
 
@@ -53,7 +53,7 @@ public class TelegramClient extends telegram.client.TelegramClient {
 
 		Message message = new Message(new Chat(blackCardUser.getChatId()));
 		message.setPlatform(Platform.COMMON);
-		message.setMessageId(Integer.valueOf(blackCardUser.getMetaInf()));
+		message.setMessageId(Integer.valueOf(blackCardUser.getBlackCardMetaInf()));
 
 		editInlineButtons(
 				createButtonListMarkup(false, pickedCards.values().stream()
@@ -67,13 +67,12 @@ public class TelegramClient extends telegram.client.TelegramClient {
 		users.forEach(u -> {
 
 //			if (u.getBlackCard() == null) {todo
+			message.getChat().setId(u.getChatId());
 
-				message.getChat().setId(u.getChatId());
-
-				sendButtons(createButtonListMarkup(false,
-						u.getCards().stream().map(c -> new InlineKeyboardButton(c.getName(),
-								setPayloadParams(c.getId(), WHITE_CARD_CHOICE)))
-								.toArray(InlineKeyboardButton[]::new)), blackCard.getName(), message);
+			sendButtons(createButtonListMarkup(false,
+					u.getCards().stream().map(c -> new InlineKeyboardButton(c.getName(),
+							setPayloadParams(c.getId(), WHITE_CARD_CHOICE)))
+							.toArray(InlineKeyboardButton[]::new)), blackCard.getName(), message);
 //			}
 		});
 	}
@@ -83,39 +82,3 @@ public class TelegramClient extends telegram.client.TelegramClient {
 				.createPayloadWithParams(payload.name(), cardId);///chatId - in this case it's room id
 	}
 }
-
-
-//	public void gameInterface(Room room, Card blackCard, Message message, Map<String, Card> pickedCards) {
-//		List<User> users = room.getUserQueue();
-//
-//		users.forEach(u -> {
-//
-//			if (u.getMetaInf() != null) {
-//				////for white
-//				//			if (u.getBlackCard() == null) {todo
-//				message.getChat().setId(u.getChatId());
-//
-//				sendButtons(createButtonListMarkup(false,
-//						u.getCards().stream().map(c -> new InlineKeyboardButton(c.getName(),
-//								setPayloadParams(message.getChat().getId().toString(), c.getId(), WHITE_CARD_CHOICE)))
-//								.toArray(InlineKeyboardButton[]::new)), blackCard.getName(), message);
-//
-//
-//				///for black
-//				//			} else {
-//				gameInterfaceBorBlackCard(u, pickedCards);
-//				//			}
-//			}
-//
-//
-//			else {
-//				message.getChat().setId(u.getChatId());
-//				sendButtons(createButtonListMarkup(false,
-//						new InlineKeyboardButton(TextUtils.getResourseMessage(message, "START_GAME"),
-//								PayloadUtils.createPayloadWithParams(START_GAME.name(), u.getChatId().toString()))),
-//						blackCard.getName(), message);
-//
-//			}
-//
-//		});
-//	}

@@ -2,8 +2,6 @@ package com.blackonwhite.service;
 
 import com.blackonwhite.client.TelegramClient;
 import com.blackonwhite.exceprion.BotException;
-import com.blackonwhite.model.Card;
-import com.blackonwhite.model.Room;
 import com.blackonwhite.model.User;
 import com.blackonwhite.model.UserStatus;
 import com.blackonwhite.util.TextUtils;
@@ -13,9 +11,7 @@ import telegram.Message;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.stream.Collectors;
 
 import static com.blackonwhite.util.TextUtils.getResourseMessage;
 
@@ -25,11 +21,14 @@ public class CommandService {
 	private final TelegramClient telegramClient;
 	private final RoomService roomService;
 	private final CardService cardService;
+	private final FileService fileService;
 
-	public CommandService(TelegramClient telegramClient, RoomService roomService, CardService cardService) {
+	public CommandService(TelegramClient telegramClient, RoomService roomService, CardService cardService,
+						  FileService fileService) {
 		this.telegramClient = telegramClient;
 		this.roomService = roomService;
 		this.cardService = cardService;
+		this.fileService = fileService;
 	}
 
 	@Transactional
@@ -78,11 +77,15 @@ public class CommandService {
 //				Map<String, Card> pickedCards = room.getPickedCards().entrySet().stream()
 //						.collect(Collectors.toMap(c -> c.getKey(), c -> cardService.getCard(c.getValue())));
 
-				telegramClient.gameInterface(nextBlackCardUser, message);
+				telegramClient.gameInterface(nextBlackCardUser, message, cardService.getCard(user.getBlackCardId()));
 				break;
 
 			case "/exittheroom":
 				exitTheRoom(message, user);
+				break;
+
+			case "/createFile":
+				fileService.createXLFile(message);
 				break;
 
 			default:

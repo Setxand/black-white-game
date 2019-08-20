@@ -58,7 +58,9 @@ public class RoomService {
 		room.getUserQueue().remove(user);
 
 		user.setCards(new LinkedList<>());
-		if (user.getBlackCard() != null) user.setBlackCard(null);
+
+		if (user.getBlackCardId() != null) user.setBlackCardId(null);
+
 		user.setVinRate(0);
 		user.setRoomId(null);
 		return room.getUserQueue();
@@ -89,15 +91,15 @@ public class RoomService {
 
 		User prevUser = userQueue.get(0);
 
-		if (prevUser.getBlackCard() != null) {
-			prevUser.setBlackCard(null);
+		if (prevUser.getBlackCardId() != null) {
+			prevUser.setBlackCardId(null);
 			userQueue.add(userQueue.size(), prevUser);
 			userQueue.remove(0);
 		}
 
 		User newUser = userQueue.get(0);
 		room.setBlackCardPlayerId(newUser.getChatId());
-		newUser.setBlackCard(cardService.getRandomCard(roomId, Card.CardType.BLACK));
+		newUser.setBlackCardId(cardService.getRandomCard(roomId, Card.CardType.BLACK).getId());
 
 		return userQueue.get(0);
 	}

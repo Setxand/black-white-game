@@ -2,6 +2,7 @@ package com.blackonwhite.service;
 
 import com.blackonwhite.client.Platform;
 import com.blackonwhite.client.TelegramClient;
+import com.blackonwhite.model.Card;
 import com.blackonwhite.model.Room;
 import com.blackonwhite.model.User;
 import com.blackonwhite.payload.CallBackPayload;
@@ -13,6 +14,7 @@ import telegram.Chat;
 import telegram.Message;
 
 import javax.transaction.Transactional;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,8 +26,8 @@ public class CallbackQueryProcessor {
 	private final UserService userService;
 	private final CardService cardService;
 
-	public CallbackQueryProcessor(TelegramClient telegramClient, RoomService roomService,
-								  UserService userService, CardService cardService) {
+	public CallbackQueryProcessor(TelegramClient telegramClient, RoomService roomService, UserService userService,
+								  CardService cardService) {
 		this.telegramClient = telegramClient;
 		this.roomService = roomService;
 		this.userService = userService;
@@ -43,11 +45,12 @@ public class CallbackQueryProcessor {
 
 			case START_GAME:
 				List<User> userQueue = roomService.getRoom(user.getRoomId()).getUserQueue();
-				user.setMetaInf(callBackQuery.getMessage().getMessageId().toString());
+				user.setBlackCardMetaInf(callBackQuery.getMessage().getMessageId().toString());
 
 				telegramClient.simpleMessage("Game was started", callBackQuery.getMessage());////todo ditionary
 				telegramClient.editInlineButtons(null, callBackQuery.getMessage());
-				telegramClient.gameInterfaceForWhite(userQueue, callBackQuery.getMessage(), user.getBlackCard());
+				telegramClient.gameInterfaceForWhite(userQueue, callBackQuery.getMessage(),
+						cardService.getCard(user.getBlackCardId()));
 				break;
 
 			case WHITE_CARD_CHOICE:
@@ -83,13 +86,24 @@ public class CallbackQueryProcessor {
 								winRate(room.getUserQueue())), message);
 			});
 
+			user.setBlackCardId(null);
+			user.setBlackCardMetaInf(null);
+			telegramClient.deleteMessage(message);
+
+			room.setPickedCards(new HashMap<>());
+
+			User nextBlackCardUser = roomService.getNextBlackCardUser(message);
+			telegramClient.gameInterface(nextBlackCardUser, message,
+					cardService.getCard(nextBlackCardUser.getBlackCardId()));
+
 		} else {
 			telegramClient.simpleMessage(TextUtils.getResourseMessage(message, "ANSWER_WAIT"), message);
 		}
 	}
 
 	private String winRate(List<User> userQueue) {
-		return userQueue.stream().map(u -> u.getName() + " - " + u.getVinRate()).collect(Collectors.joining("\n"));
+		return userQueue.stream().map(u -> u.getName() + " - " + u.getVinRate())
+				.collect(Collectors.joining("\n"));
 	}
 
 	private void whiteCardChoice(CallBackQuery callBackQuery, User user) {
@@ -101,11 +115,14 @@ public class CallbackQueryProcessor {
 
 		room.getPickedCards().put(cardId, user.getChatId().toString());
 
+		user.getCards().remove(cardService.getCard(cardId));
+		user.getCards().add(cardService.getRandomCard(user.getRoomId(), Card.CardType.WHITE));
+
 		telegramClient.gameInterfaceBorBlackCard(blackCardUser,
 				room.getPickedCards().entrySet().stream()
 						.collect(Collectors.toMap(c -> c.getValue(), c -> cardService.getCard(c.getKey()))));
 
-		telegramClient.editInlineButtons(null, callBackQuery.getMessage());
+		telegramClient.deleteMessage(callBackQuery.getMessage());
 	}
 
 	private void simpleQuestion(CallBackQuery callBackQuery) {
@@ -128,15 +145,13 @@ public class CallbackQueryProcessor {
 								.simpleMessage("User " + player.getName() + " has connected to the game.", message);///todo dictionary
 					});
 					player.setRoomId(message.getChat().getId());
+					telegramClient.deleteMessage(callBackQuery.getMessage());
 
 				} else {
+					telegramClient.deleteMessage(callBackQuery.getMessage());
 					callBackQuery.getMessage().getChat().setId(Integer.parseInt(params[1]));
 					telegramClient.simpleMessage("Your request to room was declined", callBackQuery.getMessage());
-					telegramClient.editInlineButtons(null, callBackQuery.getMessage());
 				}
-
-				telegramClient.editInlineButtons(null, callBackQuery.getMessage());
-
 				break;
 
 			default:
