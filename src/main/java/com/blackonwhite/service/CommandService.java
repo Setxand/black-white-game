@@ -1,5 +1,6 @@
 package com.blackonwhite.service;
 
+import com.blackonwhite.Access;
 import com.blackonwhite.client.TelegramClient;
 import com.blackonwhite.exceprion.BotException;
 import com.blackonwhite.model.User;
@@ -37,6 +38,8 @@ public class CommandService {
 		user.setStatus(null);
 
 
+		Access.inTheGame(user, message);
+
 		switch (command) {
 
 			case "/start":
@@ -54,7 +57,7 @@ public class CommandService {
 				break;
 
 			case "/createroom":
-				roomService.createRoom(message);
+				roomService.createRoom(message, user);
 				telegramClient.simpleMessage(getResourseMessage(message, "ROOM_ID") +
 						message.getChat().getId(), message);
 				break;
@@ -72,12 +75,9 @@ public class CommandService {
 
 			case "/startthegame":
 				roomService.startTheGame(message);
-				User nextBlackCardUser = roomService.getNextBlackCardUser(message);
-
-//				Map<String, Card> pickedCards = room.getPickedCards().entrySet().stream()
-//						.collect(Collectors.toMap(c -> c.getKey(), c -> cardService.getCard(c.getValue())));
-
-				telegramClient.gameInterface(nextBlackCardUser, message, cardService.getCard(user.getBlackCardId()));
+				User nextBlackCardUser = roomService.getNextBlackCardUser(message, user);
+				telegramClient.gameInterface(nextBlackCardUser, message,
+						cardService.getCard(nextBlackCardUser.getBlackCardId()));
 				break;
 
 			case "/exittheroom":
@@ -102,7 +102,8 @@ public class CommandService {
 		users.forEach(u -> {
 			if (!u.getChatId().equals(user.getChatId())) {
 				message.getChat().setId(u.getChatId());
-				telegramClient.simpleMessage(TextUtils.getResourseMessage(message, "USER_KICKED"), message);
+				telegramClient.simpleMessage(String.format(TextUtils
+						.getResourseMessage(message, "USER_KICKED"), user.getName()), message);
 			}
 		});
 

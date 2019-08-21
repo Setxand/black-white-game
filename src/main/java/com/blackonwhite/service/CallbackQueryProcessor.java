@@ -86,13 +86,13 @@ public class CallbackQueryProcessor {
 								winRate(room.getUserQueue())), message);
 			});
 
-			user.setBlackCardId(null);
-			user.setBlackCardMetaInf(null);
+
+			message.getChat().setId(user.getChatId());
 			telegramClient.deleteMessage(message);
 
 			room.setPickedCards(new HashMap<>());
 
-			User nextBlackCardUser = roomService.getNextBlackCardUser(message);
+			User nextBlackCardUser = roomService.getNextBlackCardUser(message, user);
 			telegramClient.gameInterface(nextBlackCardUser, message,
 					cardService.getCard(nextBlackCardUser.getBlackCardId()));
 
@@ -116,7 +116,7 @@ public class CallbackQueryProcessor {
 		room.getPickedCards().put(cardId, user.getChatId().toString());
 
 		user.getCards().remove(cardService.getCard(cardId));
-		user.getCards().add(cardService.getRandomCard(user.getRoomId(), Card.CardType.WHITE));
+		user.getCards().add(cardService.getRandomCard(Card.CardType.WHITE, user.getRoomId()));
 
 		telegramClient.gameInterfaceBorBlackCard(blackCardUser,
 				room.getPickedCards().entrySet().stream()
@@ -144,7 +144,7 @@ public class CallbackQueryProcessor {
 						telegramClient
 								.simpleMessage("User " + player.getName() + " has connected to the game.", message);///todo dictionary
 					});
-					player.setRoomId(message.getChat().getId());
+
 					telegramClient.deleteMessage(callBackQuery.getMessage());
 
 				} else {

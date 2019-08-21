@@ -5,6 +5,7 @@ import com.blackonwhite.model.Card;
 import com.blackonwhite.model.Room;
 import com.blackonwhite.model.User;
 import com.blackonwhite.repository.RoomRepository;
+import com.blackonwhite.repository.UserRepository;
 import com.blackonwhite.util.TextUtils;
 import org.springframework.stereotype.Service;
 import telegram.Message;
@@ -16,17 +17,18 @@ import java.util.*;
 public class RoomService {
 
 	private final RoomRepository roomRepo;
-	private final UserService userService;
 	private final CardService cardService;
+	private final UserRepository userRepo;
 
-	public RoomService(RoomRepository roomRepo, UserService userService, CardService cardService) {
+	public RoomService(RoomRepository roomRepo, CardService cardService, UserRepository userRepo) {
 		this.roomRepo = roomRepo;
-		this.userService = userService;
 		this.cardService = cardService;
+		this.userRepo = userRepo;
 	}
 
+
 	@Transactional
-	public void createRoom(Message message) {
+	public void createRoom(Message message, User host) {
 		Optional<Room> roomOpt = roomRepo.findById(message.getChat().getId());
 
 		if (!roomOpt.isPresent()) {
@@ -34,6 +36,7 @@ public class RoomService {
 			Room room = new Room();
 			room.setHostId(message.getChat().getId());
 			roomRepo.save(room);
+			addPlayer(host.getChatId(), host);
 
 		} else {
 			throw new BotException(ResourceBundle.getBundle("dictionary",
@@ -44,7 +47,15 @@ public class RoomService {
 	}
 
 	public void deleteRoom(Message message) {
-		Room room = getRoom(message.getChat().getId());
+		Room room = null;
+
+		try {
+			room = getRoom(message.getChat().getId());
+		} catch (IllegalArgumentException ex) {
+			throw new BotException(TextUtils.getResourseMessage(message, "ILLEGAL_OPERATION"),
+					message.getChat().getId());
+		}
+
 		room.getUserQueue().forEach(this::deleteRoomForUser);
 
 		cardService.deleteRoom(message.getChat().getId());
@@ -75,13 +86,14 @@ public class RoomService {
 		}
 
 		room.getUserQueue().add(0, player);
+		player.setRoomId(roomId);
 
 		return room.getUserQueue();
 	}
 
 	@Transactional
-	public User getNextBlackCardUser(Message message) {
-		Integer roomId = message.getChat().getId();
+	public User getNextBlackCardUser(Message message, User user) {
+		Integer roomId = user.getRoomId();
 
 		Room room = getRoom(roomId);
 		List<User> userQueue = room.getUserQueue();
@@ -99,9 +111,9 @@ public class RoomService {
 
 		User newUser = userQueue.get(0);
 		room.setBlackCardPlayerId(newUser.getChatId());
-		newUser.setBlackCardId(cardService.getRandomCard(roomId, Card.CardType.BLACK).getId());
+		newUser.setBlackCardId(cardService.getRandomCard(Card.CardType.BLACK, roomId).getId());
 
-		return userQueue.get(0);
+		return userRepo.saveAndFlush(newUser);
 	}
 
 	@Transactional
@@ -115,7 +127,7 @@ public class RoomService {
 		userQueue.forEach(u -> {
 
 			for (int i = 0; i < 5; i++) {
-				u.getCards().add(cardService.getRandomCard(roomId, Card.CardType.WHITE));
+				u.getCards().add(cardService.getRandomCard(Card.CardType.WHITE, roomId));
 			}
 
 		});

@@ -9,6 +9,7 @@ public class TextUtils {
 
 	public static String getResourseMessage(Message message, String key) {
 		return ResourceBundle.getBundle("dictionary",
-				new Locale(message.getFrom().getLanguageCode())).getString(key);
+				message.getFrom().getLanguageCode() != null ?
+						new Locale(message.getFrom().getLanguageCode()) : null).getString(key);
 	}
 }
