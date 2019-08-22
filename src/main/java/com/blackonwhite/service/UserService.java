@@ -25,6 +25,11 @@ public class UserService {
 			user.setChatId(message.getChat().getId());
 			user.setName(message.getChat().getFirstName() + " " + message.getChat().getLastName());
 			user.setRole(User.Role.USER);
+
+			if (message.getFrom().getLanguageCode() != null) {
+				user.setLocale(new Locale(message.getFrom().getLanguageCode()));
+			}
+
 			return userRepo.save(user);
 		});
 	}

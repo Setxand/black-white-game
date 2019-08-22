@@ -30,6 +30,7 @@ public class DirectionService {
 
 		if (update.getCallBackQuery() != null) {
 			User user = userService.createUser(update.getCallBackQuery().getMessage());
+			localeCheck(user, update);
 
 			update.getCallBackQuery().getMessage().setPlatform(Platform.COMMON);
 			callbackQueryProcessor.parseCallBackQuery(update.getCallBackQuery(), user);
@@ -37,16 +38,26 @@ public class DirectionService {
 
 		} else if (update.getMessage().document != null) {
 			User user = userService.createUser(update.getMessage());
+			localeCheck(user, update);
+
 			update.getMessage().setPlatform(Platform.COMMON);
 			Access.admin(user);
 			fileService.loadCardPack(update);
 
 		} else if (update.getMessage() != null) {
 			User user = userService.createUser(update.getMessage());
-
+			localeCheck(user, update);
 			update.getMessage().setPlatform(Platform.COMMON);
 			messageProcessor.parseMessage(update.getMessage(), user);
 
+		}
+	}
+
+	private void localeCheck(User user, Update update) {
+		if (update.getCallBackQuery() != null) {
+			update.getCallBackQuery().getMessage().getFrom().setLanguageCode(user.getLocale().getCountry());
+		} else if (update.getMessage().getFrom().getLanguageCode() == null) {
+			update.getMessage().getFrom().setLanguageCode(user.getLocale().getCountry());
 		}
 	}
 }

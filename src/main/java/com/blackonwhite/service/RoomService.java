@@ -6,12 +6,13 @@ import com.blackonwhite.model.Room;
 import com.blackonwhite.model.User;
 import com.blackonwhite.repository.RoomRepository;
 import com.blackonwhite.repository.UserRepository;
-import com.blackonwhite.util.TextUtils;
 import org.springframework.stereotype.Service;
 import telegram.Message;
 
 import javax.transaction.Transactional;
 import java.util.*;
+
+import static com.blackonwhite.util.TextUtils.getResourseMessage;
 
 @Service
 public class RoomService {
@@ -36,7 +37,7 @@ public class RoomService {
 			Room room = new Room();
 			room.setHostId(message.getChat().getId());
 			roomRepo.save(room);
-			addPlayer(host.getChatId(), host);
+			addPlayer(message, host);
 
 		} else {
 			throw new BotException(ResourceBundle.getBundle("dictionary",
@@ -46,24 +47,24 @@ public class RoomService {
 
 	}
 
-	public List<User> deleteRoom(Message message) {
+	public List<User> deleteRoom(Message message, User user) {
 		Room room = null;
 
 		try {
 			room = getRoom(message.getChat().getId());
 		} catch (IllegalArgumentException ex) {
-			throw new BotException(TextUtils.getResourseMessage(message, "ILLEGAL_OP"),
+			throw new BotException(getResourseMessage(user, "ILLEGAL_OP"),
 					message.getChat().getId());
 		}
 
 		ArrayList<User> users = new ArrayList<>(room.getUserQueue());
 
 		for (Iterator<User> iterator = room.getUserQueue().iterator(); iterator.hasNext(); ) {
-			User user = iterator.next();
-			user.setCards(new LinkedList<>());
-			if (user.getBlackCardId() != null) user.setBlackCardId(null);
-			user.setVinRate(0);
-			user.setRoomId(null);
+			User u = iterator.next();
+			u.setCards(new LinkedList<>());
+			if (u.getBlackCardId() != null) u.setBlackCardId(null);
+			u.setWinRate(0);
+			u.setRoomId(null);
 		}
 
 		room.setUserQueue(new LinkedList<>());
@@ -83,17 +84,20 @@ public class RoomService {
 
 		if (user.getBlackCardId() != null) user.setBlackCardId(null);
 
-		user.setVinRate(0);
+		user.setWinRate(0);
 		user.setRoomId(null);
 		return room.getUserQueue();
 	}
 
 	@Transactional
-	public List<User> addPlayer(Integer roomId, User player) {
+	public List<User> addPlayer(Message message, User player) {
+		Integer roomId = message.getChat().getId();
+
 		Room room = getRoom(roomId);
 
 		if (room.getUserQueue().contains(player)) {
-			throw new BotException("User already exists in the room", roomId);///todo exc in dictionary
+			throw new BotException(ResourceBundle.getBundle("dictionary",
+					new Locale(message.getFrom().getLanguageCode())).getString("USER_EXISTS_IN_ROOM"), roomId);
 		}
 
 		room.getUserQueue().add(0, player);
@@ -110,7 +114,7 @@ public class RoomService {
 		List<User> userQueue = room.getUserQueue();
 
 		if (userQueue.size() < 1) ///todo in real case min is 3!
-			throw new BotException(TextUtils.getResourseMessage(message, "PLAYERS_COUNT_ERROR"), roomId);
+			throw new BotException(getResourseMessage(user, "PLAYERS_COUNT_ERROR"), roomId);
 
 		User prevUser = userQueue.get(0);
 
@@ -131,14 +135,12 @@ public class RoomService {
 	public Room startTheGame(Message message) {
 		Integer roomId = message.getChat().getId();
 		Room room = roomRepo.findById(roomId)
-				.orElseThrow(() -> new BotException(TextUtils.getResourseMessage(message, "CREATE_ROOM_FIRST"), roomId));
+				.orElseThrow(() -> new BotException(getResourseMessage(message, "CREATE_ROOM_FIRST"), roomId));
 
 		List<User> userQueue = room.getUserQueue();
 		userQueue.forEach(u -> {
-
 			for (int i = 0; i < 5; i++) {
 				u.getCards().add(cardService.getRandomCard(Card.CardType.WHITE, roomId));
-
 			}
 		});
 

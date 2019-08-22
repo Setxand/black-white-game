@@ -7,6 +7,7 @@ import lombok.Setter;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Entity
 @Getter
@@ -25,11 +26,10 @@ public class User {
 	private String name;
 	private Integer roomId;
 	private UserStatus status;
-	private int vinRate;
+	private int winRate;
 	private String blackCardId;
-	private String blackCardMetaInf;
-	private String whiteCardMetaInf;
-	
+	private Locale locale = new Locale("en");
+
 	@Enumerated(EnumType.STRING)
 	private Role role;
 

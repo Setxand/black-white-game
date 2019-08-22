@@ -79,7 +79,7 @@ public class FileService {
 			workbook.close();
 
 		} catch (IOException e) {
-			logger.warn("IOEx", e);
+			logger.warn("Failed to create XLSX file: ", e);
 		}
 
 		telegramClient.sendFile(message, new FileSystemResource("cards.xlsx"));
@@ -109,13 +109,17 @@ public class FileService {
 
 		int i = 1;
 		while (sheet.getRow(i) != null) {
-			Card card = new Card();
-			card.setCardType(Card.CardType.valueOf(sheet.getRow(i).getCell(0).getStringCellValue()));
-			card.setName(sheet.getRow(i).getCell(1).getStringCellValue());
-			cardRepo.saveAndFlush(card);
+			createCard(sheet.getRow(i));
 			i++;
 		}
 
 		telegramClient.simpleMessage("Card pack Replaced", update.getMessage());
+	}
+
+	private void createCard(Row row) {
+		Card card = new Card();
+		card.setCardType(Card.CardType.valueOf(row.getCell(0).getStringCellValue()));
+		card.setName(row.getCell(1).getStringCellValue());
+		cardRepo.saveAndFlush(card);
 	}
 }

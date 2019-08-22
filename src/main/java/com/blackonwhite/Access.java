@@ -7,11 +7,12 @@ import telegram.Message;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 
 
 public class Access {
 
-	private static final HashSet hostCommands = new HashSet(Arrays.asList("/startthegame", "/deleteroom"));
+	private static final Set<String> hostCommands = new HashSet(Arrays.asList("/startthegame", "/deleteroom"));
 
 	public static void inTheGame(User user, Message message) {
 		if (user.getRoomId() != null && !message.getText().equals("/exittheroom")

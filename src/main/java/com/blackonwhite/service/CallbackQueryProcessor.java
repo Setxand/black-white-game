@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.blackonwhite.util.TextUtils.getResourseMessage;
+
 @Component
 public class CallbackQueryProcessor {
 
@@ -44,13 +46,7 @@ public class CallbackQueryProcessor {
 				break;
 
 			case START_GAME:
-				List<User> userQueue = roomService.getRoom(user.getRoomId()).getUserQueue();
-				user.setBlackCardMetaInf(callBackQuery.getMessage().getMessageId().toString());
-
-				telegramClient.simpleMessage("Game was started", callBackQuery.getMessage());////todo ditionary
-				telegramClient.editInlineButtons(null, callBackQuery.getMessage());
-				telegramClient.gameInterfaceForWhite(userQueue, callBackQuery.getMessage(),
-						cardService.getCard(user.getBlackCardId()));
+				startTheGame(callBackQuery, user);
 				break;
 
 			case WHITE_CARD_CHOICE:
@@ -67,6 +63,17 @@ public class CallbackQueryProcessor {
 
 	}
 
+	private void startTheGame(CallBackQuery callBackQuery, User user) {
+		List<User> userQueue = roomService.getRoom(user.getRoomId()).getUserQueue();
+
+		telegramClient.simpleMessage(getResourseMessage(user, "GAME_STARTED"),
+				callBackQuery.getMessage());
+
+		telegramClient.editInlineButtons(null, callBackQuery.getMessage());
+		telegramClient.gameInterfaceForWhite(userQueue, callBackQuery.getMessage(),
+				cardService.getCard(user.getBlackCardId()));
+	}
+
 	private void blackCardChoice(CallBackQuery callBackQuery, User user) {
 		Message message = callBackQuery.getMessage();
 		message.getFrom().setLanguageCode(callBackQuery.getFrom().getLanguageCode());
@@ -77,12 +84,12 @@ public class CallbackQueryProcessor {
 			String playerId = room.getPickedCards().get(cardId);
 
 			User player = userService.getUser(Integer.valueOf(playerId));
-			player.setVinRate(player.getVinRate() + 1);
+			player.setWinRate(player.getWinRate() + 1);
 
 			room.getUserQueue().forEach(u -> {
 				message.getChat().setId(u.getChatId());
 				telegramClient.simpleMessage(
-						String.format(TextUtils.getResourseMessage(message, "WIN_RATE"),
+						String.format(TextUtils.getResourseMessage(user, "WIN_RATE"),
 								winRate(room.getUserQueue())), message);
 			});
 
@@ -97,12 +104,12 @@ public class CallbackQueryProcessor {
 					cardService.getCard(nextBlackCardUser.getBlackCardId()));
 
 		} else {
-			telegramClient.simpleMessage(TextUtils.getResourseMessage(message, "ANSWER_WAIT"), message);
+			telegramClient.simpleMessage(getResourseMessage(user, "ANSWER_WAIT"), message);
 		}
 	}
 
 	private String winRate(List<User> userQueue) {
-		return userQueue.stream().map(u -> u.getName() + " - " + u.getVinRate())
+		return userQueue.stream().map(u -> u.getName() + " - " + u.getWinRate())
 				.collect(Collectors.joining("\n"));
 	}
 
@@ -135,14 +142,15 @@ public class CallbackQueryProcessor {
 
 					User player = userService.getUser(Integer.parseInt(params[1]));
 					List<User> users = roomService
-							.addPlayer(callBackQuery.getMessage().getChat().getId(), player);
+							.addPlayer(callBackQuery.getMessage(), player);
 
 					Message message = new Message(new Chat());
 					message.setPlatform(Platform.COMMON);
+
 					users.forEach(u -> {
 						message.getChat().setId(u.getChatId());
-						telegramClient
-								.simpleMessage("User " + player.getName() + " has connected to the game.", message);///todo dictionary
+						telegramClient.simpleMessage(String.format(getResourseMessage(u, "USER_CONNECTED"),
+								player.getName()), message);
 					});
 
 					telegramClient.deleteMessage(callBackQuery.getMessage());
@@ -150,7 +158,9 @@ public class CallbackQueryProcessor {
 				} else {
 					telegramClient.deleteMessage(callBackQuery.getMessage());
 					callBackQuery.getMessage().getChat().setId(Integer.parseInt(params[1]));
-					telegramClient.simpleMessage("Your request to room was declined", callBackQuery.getMessage());
+
+					telegramClient.simpleMessage("Your request to room was declined",
+							callBackQuery.getMessage());
 				}
 				break;
 

@@ -61,11 +61,11 @@ public class CommandService {
 				break;
 
 			case "/deleteroom":
-				List<User> users = roomService.deleteRoom(message);
+				List<User> users = roomService.deleteRoom(message, user);
 
 				users.forEach(u -> {
 					message.getChat().setId(u.getChatId());
-					telegramClient.simpleMessage(getResourseMessage(message, "ROOM_DELETED"), message);
+					telegramClient.simpleMessage(getResourseMessage(user, "ROOM_DELETED"), message);
 				});
 
 //				message.getChat().setId(user.getChatId());
@@ -75,7 +75,7 @@ public class CommandService {
 
 			case "/connecttorooom":
 				user.setStatus(UserStatus.ROOM_CONNECTION);
-				telegramClient.simpleMessage(getResourseMessage(message, "ROOM_CONNECTION"), message);
+				telegramClient.simpleMessage(getResourseMessage(user, "ROOM_CONNECTION"), message);
 				break;
 
 			case "/startthegame":
@@ -101,7 +101,7 @@ public class CommandService {
 	}
 
 	private void exitTheRoom(Message message, User user) {
-		if (user.getRoomId() == null) botEx(message);
+		if (user.getRoomId() == null) botEx(message, user);
 
 		List<User> users = roomService.deleteRoomForUser(user);
 
@@ -109,16 +109,16 @@ public class CommandService {
 			if (!u.getChatId().equals(user.getChatId())) {
 				message.getChat().setId(u.getChatId());
 				telegramClient.simpleMessage(String.format(TextUtils
-						.getResourseMessage(message, "USER_KICKED"), user.getName()), message);
+						.getResourseMessage(user, "USER_KICKED"), user.getName()), message);
 			}
 		});
 
 		message.getChat().setId(user.getChatId());
-		telegramClient.simpleMessage(TextUtils.getResourseMessage(message, "DONE"), message);
+		telegramClient.simpleMessage(TextUtils.getResourseMessage(user, "DONE"), message);
 	}
 
-	private void botEx(Message message) {
-		throw new BotException(TextUtils.getResourseMessage(message, "ILLEGAL_OP"), message.getChat().getId());
+	private void botEx(Message message, User user) {
+		throw new BotException(TextUtils.getResourseMessage(user, "ILLEGAL_OP"), message.getChat().getId());
 	}
 
 	private void createCard(UserStatus status, Message message, User user) {
