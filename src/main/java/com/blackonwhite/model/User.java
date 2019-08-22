@@ -28,6 +28,8 @@ public class User {
 	private UserStatus status;
 	private int winRate;
 	private String blackCardId;
+	private String blackCardMetaInf;
+	private String whiteCardMetaInf;
 	private Locale locale = new Locale("en");
 
 	@Enumerated(EnumType.STRING)

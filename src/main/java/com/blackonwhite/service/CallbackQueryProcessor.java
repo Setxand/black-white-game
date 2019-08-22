@@ -66,6 +66,8 @@ public class CallbackQueryProcessor {
 	private void startTheGame(CallBackQuery callBackQuery, User user) {
 		List<User> userQueue = roomService.getRoom(user.getRoomId()).getUserQueue();
 
+		user.setBlackCardMetaInf(callBackQuery.getMessage().getMessageId().toString());
+
 		telegramClient.simpleMessage(getResourseMessage(user, "GAME_STARTED"),
 				callBackQuery.getMessage());
 
