@@ -52,6 +52,7 @@ public class TelegramClient extends telegram.client.TelegramClient {
 	public void gameInterfaceBorBlackCard(User blackCardUser, Map<String, Card> pickedCards) {
 
 		Message message = new Message(new Chat(blackCardUser.getChatId()));
+		message.setMessageId(Integer.valueOf(blackCardUser.getBlackCardMetaInf()));
 		message.setPlatform(Platform.COMMON);
 
 		editInlineButtons(
