@@ -25,8 +25,11 @@ public class CardService {
 
 	@Transactional
 	public Card getRandomCard(Card.CardType type, Integer roomId) {
-		return cardRepo.randCard(type.name(), roomId.toString())
+		Card card = cardRepo.randCard(type.name(), roomId.toString())
 				.orElseThrow(() -> new IllegalArgumentException("Card pack is empty"));
+
+		card.getRooms().add(roomId);
+		return card;
 	}
 
 	@Transactional

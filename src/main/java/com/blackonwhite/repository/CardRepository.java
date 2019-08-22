@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface CardRepository extends JpaRepository<Card, String> {
 
 
-	@Query(nativeQuery = true, value = "SELECT card.id FROM card LEFT JOIN card_rooms ON card.id = card_rooms.card_id WHERE card_type = 'WHITE' AND (rooms != '388073901' OR rooms IS NULL ) ORDER BY RAND() LIMIT 1")
+	@Query(nativeQuery = true, value = "SELECT * FROM card LEFT JOIN card_rooms ON card.id = card_rooms.card_id WHERE card_type = 'WHITE' AND (rooms != '388073901' OR rooms IS NULL ) ORDER BY RAND() LIMIT 1")
 	Optional<Card> randCard(String type, String roomId);
 
 	@Modifying

@@ -123,13 +123,12 @@ public class RoomService {
 				.orElseThrow(() -> new BotException(TextUtils.getResourseMessage(message, "CREATE_ROOM_FIRST"), roomId));
 
 		List<User> userQueue = room.getUserQueue();
-
 		userQueue.forEach(u -> {
 
 			for (int i = 0; i < 5; i++) {
 				u.getCards().add(cardService.getRandomCard(Card.CardType.WHITE, roomId));
-			}
 
+			}
 		});
 
 		return room;

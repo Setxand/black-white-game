@@ -22,4 +22,15 @@ public class Access {
 		return !(user.getChatId().equals(user.getRoomId()) && text.equals("/startthegame"));
 	}
 
+	public static void admin(User user) {
+		try {
+			throwIfFalse(user.getRole() == User.Role.ADMIN, "Forbidden");
+		} catch (IllegalArgumentException ex) {
+			throw new BotException("Forbidden", user.getChatId());
+		}
+	}
+
+	private static void throwIfFalse(boolean b, String message) {
+		if (!b) throw new IllegalArgumentException(message);
+	}
 }

@@ -85,6 +85,7 @@ public class CommandService {
 				break;
 
 			case "/createFile":
+				Access.admin(user);
 				fileService.createXLFile(message);
 				break;
 

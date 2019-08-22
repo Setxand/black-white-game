@@ -1,6 +1,7 @@
 package com.blackonwhite.service;
 
 import com.blackonwhite.client.TelegramClient;
+import com.blackonwhite.exceprion.BotException;
 import com.blackonwhite.model.Card;
 import com.blackonwhite.repository.CardRepository;
 import org.apache.log4j.Logger;
@@ -9,11 +10,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
 import telegram.Message;
+import telegram.Update;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FileService {
@@ -79,5 +83,39 @@ public class FileService {
 		}
 
 		telegramClient.sendFile(message, new FileSystemResource("cards.xlsx"));
+	}
+
+	public void loadCardPack(Update update) {
+		Map<String, Object> document = telegramClient.getDocument(update.getMessage().document.fileId,
+				update.getMessage());
+
+		Map<String, Object> result = (Map<String, Object>) document.get("result");
+		String path = (String) result.get("file_path");
+		byte[]bytes = telegramClient.loadDoc(update.getMessage(), path);
+		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+
+		Workbook workbook = null;
+		try {
+			workbook = new XSSFWorkbook(byteArrayInputStream);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		assert workbook != null;
+		Sheet sheet = workbook.getSheet("Cards");
+		if (sheet == null) throw new BotException("Invalid file, create first", update.getMessage().getChat().getId());
+
+		cardRepo.deleteAll();
+
+		int i = 1;
+		while (sheet.getRow(i) != null) {
+			Card card = new Card();
+			card.setCardType(Card.CardType.valueOf(sheet.getRow(i).getCell(0).getStringCellValue()));
+			card.setName(sheet.getRow(i).getCell(1).getStringCellValue());
+			cardRepo.saveAndFlush(card);
+			i++;
+		}
+
+		telegramClient.simpleMessage("Card pack Replaced", update.getMessage());
 	}
 }

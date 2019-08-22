@@ -1,5 +1,6 @@
 package com.blackonwhite.service;
 
+import com.blackonwhite.Access;
 import com.blackonwhite.client.Platform;
 import com.blackonwhite.model.User;
 import org.springframework.stereotype.Service;
@@ -13,14 +14,14 @@ public class DirectionService {
 	private final MessageProcessor messageProcessor;
 	private final CallbackQueryProcessor callbackQueryProcessor;
 	private final UserService userService;
-	private final DocumentProcessor documentProcessor;
+	private final FileService fileService;
 
 	public DirectionService(MessageProcessor messageProcessor, CallbackQueryProcessor callbackQueryProcessor,
-							UserService userService, DocumentProcessor documentProcessor) {
+							UserService userService, FileService fileService) {
 		this.messageProcessor = messageProcessor;
 		this.callbackQueryProcessor = callbackQueryProcessor;
 		this.userService = userService;
-		this.documentProcessor = documentProcessor;
+		this.fileService = fileService;
 	}
 
 
@@ -35,9 +36,10 @@ public class DirectionService {
 
 
 		} else if (update.getMessage().document != null) {
+			User user = userService.createUser(update.getMessage());
 			update.getMessage().setPlatform(Platform.COMMON);
-			documentProcessor.loadCardPack(update);
-
+			Access.admin(user);
+			fileService.loadCardPack(update);
 
 		} else if (update.getMessage() != null) {
 			User user = userService.createUser(update.getMessage());
