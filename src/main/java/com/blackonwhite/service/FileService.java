@@ -98,7 +98,7 @@ public class FileService {
 		try {
 			workbook = new XSSFWorkbook(byteArrayInputStream);
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.warn("Failed to get work book: ", e);
 		}
 
 		assert workbook != null;

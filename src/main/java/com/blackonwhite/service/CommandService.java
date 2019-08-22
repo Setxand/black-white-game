@@ -37,9 +37,7 @@ public class CommandService {
 		String command = message.getText();
 		user.setStatus(null);
 
-
 		Access.inTheGame(user, message);
-
 		switch (command) {
 
 			case "/start":
@@ -63,9 +61,16 @@ public class CommandService {
 				break;
 
 			case "/deleteroom":
-				roomService.deleteRoom(message);
-				String roomDeletedText = getResourseMessage(message, "ROOM_DELETED");
-				telegramClient.simpleMessage(roomDeletedText, message);
+				List<User> users = roomService.deleteRoom(message);
+
+				users.forEach(u -> {
+					message.getChat().setId(u.getChatId());
+					telegramClient.simpleMessage(getResourseMessage(message, "ROOM_DELETED"), message);
+				});
+
+//				message.getChat().setId(user.getChatId());
+//				String roomDeletedText = getResourseMessage(message, "ROOM_DELETED");
+//				telegramClient.simpleMessage(roomDeletedText, message);
 				break;
 
 			case "/connecttorooom":

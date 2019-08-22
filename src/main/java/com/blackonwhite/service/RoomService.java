@@ -46,20 +46,31 @@ public class RoomService {
 
 	}
 
-	public void deleteRoom(Message message) {
+	public List<User> deleteRoom(Message message) {
 		Room room = null;
 
 		try {
 			room = getRoom(message.getChat().getId());
 		} catch (IllegalArgumentException ex) {
-			throw new BotException(TextUtils.getResourseMessage(message, "ILLEGAL_OPERATION"),
+			throw new BotException(TextUtils.getResourseMessage(message, "ILLEGAL_OP"),
 					message.getChat().getId());
 		}
 
-		room.getUserQueue().forEach(this::deleteRoomForUser);
+		ArrayList<User> users = new ArrayList<>(room.getUserQueue());
 
+		for (Iterator<User> iterator = room.getUserQueue().iterator(); iterator.hasNext(); ) {
+			User user = iterator.next();
+			user.setCards(new LinkedList<>());
+			if (user.getBlackCardId() != null) user.setBlackCardId(null);
+			user.setVinRate(0);
+			user.setRoomId(null);
+		}
+
+		room.setUserQueue(new LinkedList<>());
 		cardService.deleteRoom(message.getChat().getId());
 		roomRepo.deleteById(message.getChat().getId());
+
+		return users;
 	}
 
 	public List<User> deleteRoomForUser(User user) {
