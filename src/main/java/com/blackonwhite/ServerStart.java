@@ -17,6 +17,7 @@ public class ServerStart {
 	@PostConstruct
 	public void init() {
 		client.setWebHooks();
+
 	}
 
 }
