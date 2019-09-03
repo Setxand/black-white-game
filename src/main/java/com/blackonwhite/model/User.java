@@ -13,6 +13,7 @@ import java.util.Locale;
 @Getter
 @Setter
 @NoArgsConstructor
+@Table(name = "game_user")
 public class User {
 
 	public enum Role {

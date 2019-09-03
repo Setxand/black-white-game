@@ -8,42 +8,37 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-    #    volumes:
-    #      - /data/blackonwhite
     volumes:
-      - ./webapp:/opt/webapp
+      - /data/blackonwhite
+#    volumes:
+#      - ./webapp:/opt/webapp
     ports:
       - "8080:8080"
     depends_on:
       - db
-    entrypoint:
-      - DATABASE_HOST=db
+    environment:
+      - DB_HOST=db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=root
+      - DATABASE_NAME=black_white_game
+      - SERVER_URL=${HEROKU_SERVER_URL}
+      - DB_PLATFORM=postgresql
 
   db:
-    image: mysql:latest
+    image: postgres:latest
     restart: always
     environment:
-      MYSQL_DATABASE: 'db'
-      # So you don't have to use root, but you can if you like
-      MYSQL_USER: 'user'
-      # You can use whatever password you like
-      MYSQL_PASSWORD: 'password'
-      # Password for root access
-      MYSQL_ROOT_PASSWORD: 'password'
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=black_white_game
     ports:
-      # <Port exposed> : < MySQL Port running inside container>
-      - '3306:3306'
+      - '5432:5432'
     expose:
-      # Opens port 3306 on the container
-      - '3306'
-      # Where our data will be persisted
+      - '5432'
 
+#      MYSQL_DATABASE: 'db'
+#      MYSQL_USER: 'user'
+#      MYSQL_PASSWORD: 'password'
+#      MYSQL_ROOT_PASSWORD: 'password'
 
-
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
 
 
