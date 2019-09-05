@@ -1,5 +1,6 @@
 package com.blackonwhite.service;
 
+import com.blackonwhite.client.TelegramClient;
 import com.blackonwhite.exceprion.BotException;
 import com.blackonwhite.model.Card;
 import com.blackonwhite.model.Room;
@@ -7,6 +8,7 @@ import com.blackonwhite.model.User;
 import com.blackonwhite.repository.RoomRepository;
 import com.blackonwhite.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import telegram.Chat;
 import telegram.Message;
 
 import javax.transaction.Transactional;
@@ -20,11 +22,14 @@ public class RoomService {
 	private final RoomRepository roomRepo;
 	private final CardService cardService;
 	private final UserRepository userRepo;
+	private final TelegramClient telegramClient;
 
-	public RoomService(RoomRepository roomRepo, CardService cardService, UserRepository userRepo) {
+	public RoomService(RoomRepository roomRepo, CardService cardService, UserRepository userRepo,
+					   TelegramClient telegramClient) {
 		this.roomRepo = roomRepo;
 		this.cardService = cardService;
 		this.userRepo = userRepo;
+		this.telegramClient = telegramClient;
 	}
 
 
@@ -65,6 +70,7 @@ public class RoomService {
 			if (u.getBlackCardId() != null) u.setBlackCardId(null);
 			u.setWinRate(0);
 			u.setRoomId(null);
+			deleteMetaInf(user);
 		}
 
 		room.setUserQueue(new LinkedList<>());
@@ -113,7 +119,7 @@ public class RoomService {
 		Room room = getRoom(roomId);
 		List<User> userQueue = room.getUserQueue();
 
-		if (userQueue.size() < 1) ///todo in real case min is 3!
+		if (userQueue.size() < 3)
 			throw new BotException(getResourseMessage(user, "PLAYERS_COUNT_ERROR"), roomId);
 
 		User prevUser = userQueue.get(0);
@@ -149,5 +155,22 @@ public class RoomService {
 
 	public Room getRoom(Integer roomId) {
 		return roomRepo.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Invalid room ID"));
+	}
+
+	private void deleteMetaInf(User user) {
+
+		if (user.getWhiteCardMetaInf() != null) {
+			telegramClient.deleteMessage(getUserInterfaceMessage(user.getChatId(), user.getWhiteCardMetaInf()));
+		}
+
+		if (user.getBlackCardMetaInf() != null) {
+			telegramClient.deleteMessage(getUserInterfaceMessage(user.getChatId(), user.getBlackCardMetaInf()));
+		}
+	}
+
+	private Message getUserInterfaceMessage(Integer chatId, String metaInf) {
+		Message message = new Message(new Chat(chatId));
+		message.setMessageId(Integer.valueOf(metaInf));
+		return message;
 	}
 }

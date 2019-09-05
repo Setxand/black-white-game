@@ -118,6 +118,8 @@ public class CallbackQueryProcessor {
 	private void whiteCardChoice(CallBackQuery callBackQuery, User user) {
 		String[] params = PayloadUtils.getParams(callBackQuery.getData());
 		String cardId = params[0];
+		user.setWhiteCardMetaInf(callBackQuery.getMessage().getMessageId().toString());
+
 		Room room = roomService.getRoom(user.getRoomId());
 
 		User blackCardUser = userService.getUser(room.getBlackCardPlayerId());

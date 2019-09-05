@@ -66,14 +66,14 @@ public class TelegramClient extends telegram.client.TelegramClient {
 	public void gameInterfaceForWhite(List<User> users, Message message, Card blackCard) {
 		users.forEach(u -> {
 
-//			if (u.getBlackCard() == null) {todo
+			if (u.getBlackCardId() == null) {
 			message.getChat().setId(u.getChatId());
 
 			sendButtons(createButtonListMarkup(false,
 					u.getCards().stream().map(c -> new InlineKeyboardButton(c.getName(),
 							setPayloadParams(c.getId(), WHITE_CARD_CHOICE)))
 							.toArray(InlineKeyboardButton[]::new)), blackCard.getName(), message);
-//			}
+			}
 		});
 	}
 
