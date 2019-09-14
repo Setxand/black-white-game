@@ -7,6 +7,7 @@ import com.blackonwhite.model.Room;
 import com.blackonwhite.model.User;
 import com.blackonwhite.repository.RoomRepository;
 import com.blackonwhite.repository.UserRepository;
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Service;
 import telegram.Chat;
 import telegram.Message;
@@ -18,6 +19,8 @@ import static com.blackonwhite.util.TextUtils.getResourseMessage;
 
 @Service
 public class RoomService {
+
+	private final static Logger log = Logger.getLogger(RoomService.class);
 
 	private final RoomRepository roomRepo;
 	private final CardService cardService;
@@ -67,10 +70,7 @@ public class RoomService {
 		for (Iterator<User> iterator = room.getUserQueue().iterator(); iterator.hasNext(); ) {
 			User u = iterator.next();
 			u.setCards(new LinkedList<>());
-			if (u.getBlackCardId() != null) u.setBlackCardId(null);
-			u.setWinRate(0);
-			u.setRoomId(null);
-			deleteMetaInf(user);
+			cleanGameInfo(user);
 		}
 
 		room.setUserQueue(new LinkedList<>());
@@ -88,10 +88,7 @@ public class RoomService {
 
 		user.setCards(new LinkedList<>());
 
-		if (user.getBlackCardId() != null) user.setBlackCardId(null);
-
-		user.setWinRate(0);
-		user.setRoomId(null);
+		cleanGameInfo(user);
 		return room.getUserQueue();
 	}
 
@@ -157,15 +154,28 @@ public class RoomService {
 		return roomRepo.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Invalid room ID"));
 	}
 
+	private void cleanGameInfo(User user) {
+		if (user.getBlackCardId() != null) user.setBlackCardId(null);
+		user.setWinRate(0);
+		user.setRoomId(null);
+		deleteMetaInf(user);
+	}
+
 	private void deleteMetaInf(User user) {
 
-		if (user.getWhiteCardMetaInf() != null) {
-			telegramClient.deleteMessage(getUserInterfaceMessage(user.getChatId(), user.getWhiteCardMetaInf()));
+
+		try {
+			if (user.getWhiteCardMetaInf() != null) {
+				telegramClient.deleteMessage(getUserInterfaceMessage(user.getChatId(), user.getWhiteCardMetaInf()));
+			}
+
+			if (user.getBlackCardMetaInf() != null) {
+				telegramClient.deleteMessage(getUserInterfaceMessage(user.getChatId(), user.getBlackCardMetaInf()));
+			}
+		} catch (Exception ex) {
+			log.warn("Failed to delete message");
 		}
 
-		if (user.getBlackCardMetaInf() != null) {
-			telegramClient.deleteMessage(getUserInterfaceMessage(user.getChatId(), user.getBlackCardMetaInf()));
-		}
 	}
 
 	private Message getUserInterfaceMessage(Integer chatId, String metaInf) {
