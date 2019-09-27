@@ -81,20 +81,8 @@ public class CallbackQueryProcessor {
 		message.getFrom().setLanguageCode(callBackQuery.getFrom().getLanguageCode());
 		Room room = roomService.getRoom(user.getRoomId());
 
-		if (room.getUserQueue().size() == room.getPickedCards().size()) {
-			String cardId = PayloadUtils.getParams(callBackQuery.getData())[0];
-			String playerId = room.getPickedCards().get(cardId);
-
-			User player = userService.getUser(Integer.valueOf(playerId));
-			player.setWinRate(player.getWinRate() + 1);
-
-			room.getUserQueue().forEach(u -> {
-				message.getChat().setId(u.getChatId());
-				telegramClient.simpleMessage(
-						String.format(TextUtils.getResourseMessage(user, "WIN_RATE"),
-								winRate(room.getUserQueue())), message);
-			});
-
+		if (room.getUserQueue().size() - 1 == room.getPickedCards().size()) {
+			vinRate(user, callBackQuery, room);
 
 			message.getChat().setId(user.getChatId());
 			telegramClient.deleteMessage(message);
@@ -108,6 +96,22 @@ public class CallbackQueryProcessor {
 		} else {
 			telegramClient.simpleMessage(getResourseMessage(user, "ANSWER_WAIT"), message);
 		}
+	}
+
+	private void vinRate(User user, CallBackQuery callBackQuery, Room room) {
+		Message message = callBackQuery.getMessage();
+		String cardId = PayloadUtils.getParams(callBackQuery.getData())[0];
+		String playerId = room.getPickedCards().get(cardId);
+
+		User player = userService.getUser(Integer.valueOf(playerId));
+		player.setWinRate(player.getWinRate() + 1);
+
+		room.getUserQueue().forEach(u -> {
+			message.getChat().setId(u.getChatId());
+			telegramClient.simpleMessage(
+					String.format(TextUtils.getResourseMessage(user, "WIN_RATE"),
+							winRate(room.getUserQueue())), message);
+		});
 	}
 
 	private String winRate(List<User> userQueue) {
